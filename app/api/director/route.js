@@ -1,19 +1,9 @@
 import { NextResponse } from "next/server";
-import { askAI, parseJSON } from "@/lib/ai";
+import { askAIFull, parseJSON } from "@/lib/ai";
 import { buildCard } from "@/lib/director";
+import { DIRECTOR_SYSTEM, directorRequest } from "@/lib/prompts";
 
 export const dynamic = "force-dynamic";
-
-const SYSTEM = `You are the Reel Director for MUSE. The creator is a beginner who shoots on an iPhone and edits in Instagram's editor or CapCut.
-Turn the idea into a practical shoot plan. Use plain words, no jargon, and describe what to do rather than where to tap.
-Return only JSON with these keys:
-- hooks: 3 opening-shot options (strings)
-- scenes: exactly 5 objects with keys time (e.g. "0 to 2s"), visual (what to film), text (on-screen text or "")
-- camera: 3 short camera tips (strings)
-- mood: one sentence about music and light
-- captions: 3 caption ideas, written to be edited in the creator's voice
-- editSteps: 6 to 8 editing steps (strings), each describing a goal
-- tools: one sentence naming the simplest free app to use first`;
 
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
@@ -26,14 +16,26 @@ export async function POST(request) {
     title,
     concept: String(body.concept || "").slice(0, 500),
     angle: String(body.angle || "Relatable"),
-    mood: String(body.mood || ""),
+    mood: String(body.mood || "").slice(0, 300),
   };
 
   const base = buildCard(input);
-  const parsed = parseJSON(await askAI(SYSTEM, JSON.stringify(input), { json: true }));
+  const { text, error } = await askAIFull(DIRECTOR_SYSTEM, directorRequest(input), { json: true });
+  const parsed = parseJSON(text);
 
-  if (parsed && Array.isArray(parsed.scenes) && parsed.scenes.length >= 3 && Array.isArray(parsed.editSteps)) {
-    return NextResponse.json({ card: { ...base, ...parsed }, source: "ai" });
+  const valid =
+    parsed &&
+    Array.isArray(parsed.scenes) &&
+    parsed.scenes.length >= 4 &&
+    Array.isArray(parsed.editSteps) &&
+    Array.isArray(parsed.hooks);
+
+  if (valid) {
+    return NextResponse.json({ card: { ...base, ...parsed }, source: "ai", reason: null });
   }
-  return NextResponse.json({ card: base, source: "built-in" });
+  return NextResponse.json({
+    card: base,
+    source: "built-in",
+    reason: error || "The AI reply was not in the expected format, so the built-in plan is showing.",
+  });
 }

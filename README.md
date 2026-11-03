@@ -7,6 +7,9 @@ A creative companion for a beginner Instagram Reels creator who shoots on an iPh
 - **Assistant:** short, practical help for "no ideas", "can't execute", "bad reel", "shooting alone", "want to quit".
 - **My Studio:** saved ideas, with saved, drafting, or posted status.
 - **Growth:** a private list of wins. No streaks, no missed-day counts.
+- **Storyboard:** one picture per scene, with the same character in every frame, so she can see each shot before filming.
+
+All ideas are written for her real life: a village home, the courtyard, the lane, the fields, and only the phone she already has. Her situation is described in `lib/creator.js`. Edit that file if her life or resources change.
 
 Everything here is free to run. The app also works with no AI key at all.
 
@@ -112,6 +115,10 @@ If the key is missing or over its free limit, the app automatically falls back t
 
 ---
 
+## Storyboard images
+
+Frames are drawn by Pollinations, a free image service that needs no key. Its uptime is not guaranteed, and images are generated when the page loads, so the first load can take several seconds. If an image fails, the frame still shows its scene text.
+
 ## Before sharing the link
 
 There is no login. Anyone with the link can use the app and read or change saved items. Keep the link private, or add a passcode before sharing it widely.
@@ -129,6 +136,9 @@ There is no login. Anyone with the link can use the app and read or change saved
 ```
 app/                 pages and API routes
 app/api/health/      connection check (open in browser)
+app/api/storyboard/  storyboard frame prompts and image links
+lib/creator.js       her situation, used by every AI prompt
+lib/prompts.js       all AI instructions in one place
 lib/db.js            Supabase connection and clear error messages
 lib/generator.js     built-in idea engine
 lib/director.js      built-in shoot plan and edit recipe

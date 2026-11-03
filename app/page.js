@@ -8,6 +8,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [setup, setSetup] = useState(null);
+  const [aiNote, setAiNote] = useState("");
 
   // Check the database connection once, so problems show up on the first screen.
   useEffect(() => {
@@ -25,6 +26,7 @@ export default function Home() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Could not get an idea.");
       setIdea(d.idea);
+      setAiNote(d.source === "ai" ? "Written by AI, shaped by your saved ideas and wins." : `Built-in idea. ${d.reason || ""}`);
     } catch (e) {
       setMsg(e.message);
     } finally {
@@ -71,6 +73,11 @@ export default function Home() {
         </div>
       )}
       {setup?.ok && <div className="banner good">{setup.message}</div>}
+      {setup?.ai && !setup.ai.configured && (
+        <div className="banner">
+          <strong>AI is off.</strong> {setup.ai.message} Ideas are built-in until you add the Gemini key.
+        </div>
+      )}
 
       <div className="card hero-card">
         {!idea ? (
@@ -109,6 +116,7 @@ export default function Home() {
         )}
       </div>
 
+      {aiNote && idea && <p className="muted" style={{ marginTop: 12 }}>{aiNote}</p>}
       {msg && <p className="msg">{msg}</p>}
     </>
   );

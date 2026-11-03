@@ -7,8 +7,13 @@ export default function Create() {
   const [ctx, setCtx] = useState({ title: "", angle: "Relatable", concept: "", mood: "" });
   const [card, setCard] = useState(null);
   const [source, setSource] = useState("");
+  const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [frames, setFrames] = useState([]);
+  const [frameInfo, setFrameInfo] = useState("");
+  const [boarding, setBoarding] = useState(false);
+  const [seed, setSeed] = useState(null);
 
   // Read ?title=&concept=&angle=&mood= from the Home page without a Suspense boundary.
   useEffect(() => {
@@ -46,7 +51,10 @@ export default function Create() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Something went wrong.");
       setCard(d.card);
+      setFrames([]);
+      setFrameInfo("");
       setSource(d.source);
+      setReason(d.reason || "");
     } catch (e) {
       setMsg(e.message);
     } finally {
@@ -68,6 +76,36 @@ export default function Create() {
       setMsg("Saved to My Studio.");
     } catch (e) {
       setMsg(e.message);
+    }
+  }
+
+  async function makeStoryboard(newSeed) {
+    if (!card) return;
+    setBoarding(true);
+    setFrameInfo("");
+    try {
+      const r = await fetch("/api/storyboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: text.trim(),
+          scenes: card.scenes,
+          seed: newSeed ?? seed ?? undefined,
+        }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Could not make the storyboard.");
+      setFrames(d.frames || []);
+      setSeed(d.seed);
+      setFrameInfo(
+        d.source === "ai"
+          ? "Frames made from your scenes. Each one keeps the same character."
+          : `Simple frames. ${d.reason || ""}`
+      );
+    } catch (e) {
+      setFrameInfo(e.message);
+    } finally {
+      setBoarding(false);
     }
   }
 
@@ -94,7 +132,9 @@ export default function Create() {
       {card && (
         <>
           <p className="muted" style={{ marginTop: 18 }}>
-            {source === "ai" ? "Written by the AI director." : "Built-in director (no AI key set)."}
+            {source === "ai"
+              ? "Written by AI, planned around your exact idea."
+              : `Built-in plan. ${reason || "AI is not connected yet."}`}
           </p>
 
           <div className="card">
@@ -136,6 +176,45 @@ export default function Create() {
           <div className="card">
             <p className="label">Caption ideas</p>
             <ul>{list(card.captions).map((c, i) => <li key={i}>{c}</li>)}</ul>
+          </div>
+
+          <div className="card">
+            <p className="label">Storyboard</p>
+            <p className="muted" style={{ marginTop: 0 }}>
+              One picture for each scene, so you can see the shots before you film. Shoot to match them.
+            </p>
+            <div className="row" style={{ marginTop: 10 }}>
+              <button className="btn" onClick={() => makeStoryboard()} disabled={boarding}>
+                {boarding ? "Drawing frames..." : frames.length ? "Make new frames" : "Make storyboard"}
+              </button>
+              {frames.length > 0 && (
+                <button className="btn ghost small" onClick={() => makeStoryboard(Math.floor(Math.random() * 100000))} disabled={boarding}>
+                  Try another look
+                </button>
+              )}
+            </div>
+            {frameInfo && <p className="muted" style={{ marginTop: 12 }}>{frameInfo}</p>}
+            {frames.length > 0 && (
+              <div className="frames">
+                {frames.map((f, i) => (
+                  <div className="frame" key={i}>
+                    <div className="frame-img">
+                      <img
+                        src={f.url}
+                        alt={`Scene ${i + 1}: ${f.visual}`}
+                        loading="lazy"
+                        onError={(e) => { e.currentTarget.style.display = "none"; }}
+                      />
+                      {f.text && <div className="overlay">{f.text}</div>}
+                    </div>
+                    <div className="frame-caption">
+                      <span className="time">Scene {i + 1} · {f.time}</span>
+                      {f.visual}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="row">
