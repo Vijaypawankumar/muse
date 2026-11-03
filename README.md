@@ -1,101 +1,138 @@
-# MUSE — Your ideas deserve to be created
+# MUSE. Your ideas deserve to be created.
 
-A small creative companion for an Instagram Reels creator who has no team. It gives her:
+A creative companion for a beginner Instagram Reels creator who shoots on an iPhone.
 
-- **Home**: one offbeat reel idea at a time, with a relatable angle and no repeats.
-- **Create (Reel Director)**: turns an idea into a scene-by-scene shot list, camera tips, mood, captions, and an edit recipe for an iPhone.
-- **Assistant**: short, practical replies for "I have no ideas", "I can't execute this", "my reel looked bad", "I'm alone", "I want to quit". No flattery, no motivational quotes.
-- **My Studio**: saved ideas, with a status of saved, drafting, or posted.
-- **Growth**: a private list of wins, with no streaks and no missed-day counts.
+- **Home:** one reel idea at a time, with an opening shot, mood, and no repeats.
+- **Create (Reel Director):** turns an idea into a shot list, camera tips, captions, and an edit recipe.
+- **Assistant:** short, practical help for "no ideas", "can't execute", "bad reel", "shooting alone", "want to quit".
+- **My Studio:** saved ideas, with saved, drafting, or posted status.
+- **Growth:** a private list of wins. No streaks, no missed-day counts.
 
-## Cost: everything here is free
+Everything here is free to run. The app also works with no AI key at all.
 
-| Part | Service | Free tier |
-|---|---|---|
-| Hosting | Vercel Hobby (or Cloudflare Pages) | Free. See the licence note below. |
-| Database | Supabase | Free project, 500 MB. Pauses after 7 days of no activity. |
-| AI (optional) | Google Gemini API | Free tier via Google AI Studio. Limits can change. |
+---
 
-The app works with **no AI key at all**. Without one, ideas and shoot plans come from the built-in engine. Add a Gemini key later for more varied output.
+## Part 1: Connect Supabase (your database)
 
-## Run it on your computer
+Your project is already created. Its name is **muse**, and its address is:
+
+```
+https://xpefaztgozmnoluylclh.supabase.co
+```
+
+The tables `ideas` and `wins` are already created in it.
+
+### Find the secret key
+
+1. Go to https://supabase.com/dashboard and click the project named **muse**.
+2. Look at the **left sidebar**. Click the **gear icon (Project Settings)** at the bottom.
+3. In the settings menu, click **API Keys** (on some screens: **Data API**, then scroll to **API Keys**).
+4. Find the key for server use. It may be listed as:
+   - **Secret key** (starts with `sb_secret_`), in the newer layout, **or**
+   - **service_role** (a long key starting with `eyJ`), in the legacy tab called **Legacy API Keys**.
+5. Click the **copy** icon next to it. Do **not** use the **publishable** key or the **anon** key. The app will reject them and tell you why.
+
+Labels change between Supabase screens. The rule is simple: copy the one that is secret and has "service_role" or "secret" in its name.
+
+### Put the values in your project
+
+Create a file named `.env.local` in the `muse` folder (copy `.env.example` and rename it). Fill it in:
+
+```
+SUPABASE_URL=https://xpefaztgozmnoluylclh.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=paste-the-secret-key-here
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+No quotes, no spaces around the `=`, and no extra text on the same line.
+
+### Check it works
+
+Run the app (Part 2), then open **http://localhost:3000/api/health** in your browser.
+
+- Green message "Connected to https://xpefaztgozmnoluylclh.supabase.co" → database is fine.
+- Red message → it tells you exactly which value to fix.
+
+The same check runs on the Home page and shows a banner if something is wrong.
+
+---
+
+## Part 2: Run it on your computer
 
 Requirements: Node.js 20 or newer.
 
 ```bash
 cd muse
 npm install
-cp .env.example .env.local   # then fill in the values (see below)
 npm run dev
 ```
 
-Open http://localhost:3000. On an iPhone, open your computer's address on the same Wi-Fi (for example http://192.168.x.x:3000) to test on the phone.
+Open http://localhost:3000.
 
-Without the Supabase values, the app still runs. Saving to My Studio, the Growth list, and "don't repeat" memory are disabled until you connect Supabase.
+---
 
-## Step 1: Create the database (free)
+## Part 3: Put it online (Vercel)
 
-1. Go to https://supabase.com, sign in, and click **New project**. Choose a free region close to you.
-2. Wait for it to finish, then open **SQL Editor → New query**.
-3. Paste the whole contents of `supabase/schema.sql` and click **Run**.
-4. Go to **Project Settings → API**. Copy:
-   - **Project URL** → `SUPABASE_URL`
-   - **service_role secret** → `SUPABASE_SERVICE_ROLE_KEY`
+1. Push the code to GitHub (see the commands below).
+2. Go to https://vercel.com, sign in with GitHub, and click **Add New → Project**. Import the `muse` repository.
+3. Before clicking Deploy, expand **Environment Variables** and add these, one at a time:
+   - Name `SUPABASE_URL`, value `https://xpefaztgozmnoluylclh.supabase.co`
+   - Name `SUPABASE_SERVICE_ROLE_KEY`, value = your secret key
+   - Optional: `GEMINI_API_KEY` and `GEMINI_MODEL` (`gemini-2.5-flash`)
+   - Do not click the Supabase "Add" integration. Enter the variables by hand.
+4. Click **Deploy**.
+5. If you add or change a variable later: **Deployments → latest → ⋯ menu → Redeploy**. Changes do not apply until you redeploy.
+6. Open `https://YOUR-SITE.vercel.app/api/health` to confirm it is connected.
 
-The service role key bypasses Row Level Security. Keep it only in server environment variables. Never put it in browser code, and never prefix it with `NEXT_PUBLIC_`. The schema turns on Row Level Security with no policies, so the public anon key cannot read or write the data.
+### Push the updated code to GitHub
 
-## Step 2: Add the AI key (optional, free)
+In the VS Code terminal, inside the `muse` folder, run these one at a time:
 
-1. Go to https://aistudio.google.com/apikey and create a key.
-2. Set `GEMINI_API_KEY` in `.env.local`. Optionally change `GEMINI_MODEL` if Google renames the model.
+```
+git add .
+git commit -m "Improve UI, add setup check" -m "Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>" -m "Claude-Session: https://claude.ai/code/session_015eTvHLee66juoZ1Vj5JVLQ"
+git push
+```
 
-If the key is missing, invalid, or over quota, the app automatically falls back to the built-in engine. It never shows an error because of AI.
+Vercel redeploys automatically after a push.
 
-## Step 3: Put it online (free)
+**Licence note:** Vercel's free Hobby plan is for personal, non-commercial use. For TruPlate business use, use Cloudflare Pages instead (same environment variables, build command `npm run build`).
 
-### Option A: Vercel (simplest)
+---
 
-1. Create a GitHub repository and push this folder to it. `.env.local` is already excluded by `.gitignore`.
-2. Go to https://vercel.com, sign in with GitHub, and click **Add New → Project**. Import the repository.
-3. Under **Environment Variables**, add `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and optionally `GEMINI_API_KEY` and `GEMINI_MODEL`.
-4. Click **Deploy**. You get a link like `https://muse-yourname.vercel.app`. Open it on her iPhone and choose **Share → Add to Home Screen**.
+## Optional: free AI for fresher ideas
 
-**Licence note:** Vercel's Hobby plan is for personal, non-commercial use. If MUSE will be used for TruPlate's business, check Vercel's current terms or use Option B.
+The built-in engine uses templates, so ideas repeat more than a live AI would produce. For fresher ideas:
 
-### Option B: Cloudflare Pages (free for commercial use)
+1. Go to https://aistudio.google.com/apikey and click **Create API key**.
+2. Put it in `GEMINI_API_KEY` (in `.env.local` and in Vercel), then redeploy.
 
-1. Push the repository to GitHub, then go to https://dash.cloudflare.com → **Workers & Pages → Create → Pages → Connect to Git**.
-2. Framework preset: **Next.js**. Build command: `npm run build`. Output: leave the default.
-3. Add the same environment variables under **Settings → Environment variables**.
-4. Deploy. Cloudflare Pages supports Next.js through its Next.js adapter. Check Cloudflare's current Next.js guide if the build step changes.
+If the key is missing or over its free limit, the app automatically falls back to the built-in engine.
 
-## Before you share the link
+---
 
-The API routes do not have a login. Anyone who has the link can generate ideas and read or change saved items. For one person's use, keep the link private. Before sharing it more widely, add a passcode check to the API routes or put the site behind your host's access protection.
+## Before sharing the link
 
-## Known limits (honest version)
+There is no login. Anyone with the link can use the app and read or change saved items. Keep the link private, or add a passcode before sharing it widely.
 
-- **Built-in engine repeats after about 120 combinations.** It has 20 seed words and 6 title patterns. Adding seeds to `lib/generator.js` extends that, and the Gemini key gives far more variety.
-- **Editing menus change.** The app describes goals ("trim to the beat") rather than exact button positions, because Instagram and CapCut move things between versions.
-- **It plans reels; it does not make them.** She still shoots and edits.
-- **No trend data.** Instagram's public API does not expose trending audio or formats for ordinary accounts. Trend research is a later step.
-- **Supabase free projects pause** after 7 days without activity. Open the app at least weekly, or upgrade when needed.
+## Known limits
+
+- **Built-in ideas repeat sooner** than AI ideas, because they come from templates.
+- **Editing menus change** between app versions, so the guide describes goals, not exact button positions.
+- **It plans reels; it does not film or edit them.**
+- **No trend data.** Instagram's public API doesn't expose trending audio or formats for ordinary accounts.
+- **Supabase free projects pause** after 7 days without activity. Open the app at least weekly.
 
 ## Project layout
 
 ```
-app/                 pages (Home, Create, Assistant, My Studio, Growth) and API routes
-app/api/             server routes that talk to Supabase and the optional AI
-lib/generator.js     built-in idea engine (no AI needed)
+app/                 pages and API routes
+app/api/health/      connection check (open in browser)
+lib/db.js            Supabase connection and clear error messages
+lib/generator.js     built-in idea engine
 lib/director.js      built-in shoot plan and edit recipe
 lib/assistant.js     built-in assistant replies
 lib/ai.js            optional Gemini client, with safe fallback
-lib/db.js            server-only Supabase client
-supabase/schema.sql  database tables
+supabase/schema.sql  database tables (already applied to your project)
 ```
-
-## Next steps (after she has used it for a week)
-
-1. Ask her which cards she actually shot, and which she skipped and why. Tune the prompts from that.
-2. Add a manual growth log (views, saves, shares per reel, weekly) and one simple pattern insight.
-3. Add a "don't repeat" check on the built-in engine by storing the seed combinations already used.
