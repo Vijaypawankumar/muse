@@ -97,10 +97,18 @@ export default function Create() {
       if (!r.ok) throw new Error(d.error || "Could not make the storyboard.");
       setFrames(d.frames || []);
       setSeed(d.seed);
+      const drawn = (d.frames || []).filter((f) => f.from === "gemini").length;
+      const total = (d.frames || []).length;
       setFrameInfo(
-        d.source === "ai"
-          ? "Frames made from your scenes. Each one keeps the same character."
-          : `Simple frames. ${d.reason || ""}`
+        [
+          d.source === "ai"
+            ? `Frames made from your scenes, with the same character in each.`
+            : `Simple frames. ${d.reason || ""}`,
+          `Pictures drawn by Gemini: ${drawn} of ${total}.`,
+          d.pictureNote || "",
+        ]
+          .filter(Boolean)
+          .join(" ")
       );
     } catch (e) {
       setFrameInfo(e.message);
